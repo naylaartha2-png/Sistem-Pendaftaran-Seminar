@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Simulasi Bug & Fix – Sistem Pendaftaran Seminar</title>
+<style>
+  /* Palet: #EFF0F4 #6192FC #11358B #C7EF66 */
+  :root { --bg:#EFF0F4; --blue:#6192FC; --navy:#11358B; --lime:#C7EF66; --limed:#8ab31f; --red:#d62839; --grey:#6b7280; --tint:rgba(97,146,252,.18); }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:"Segoe UI",Arial,sans-serif; background:var(--bg); color:#1f2937; line-height:1.6; }
+  header { background:var(--navy); color:#fff; text-align:center; padding:36px 20px; }
+  header h1 { margin:0; font-size:1.9rem; }
+  header h2 { margin:4px 0 10px; font-size:1.1rem; font-weight:500; color:var(--lime); }
+  header p { max-width:640px; margin:0 auto; color:var(--bg); }
+  main { max-width:1000px; margin:0 auto; padding:20px 16px 40px; }
+  section { background:#fff; border:1px solid #d5dbe8; border-radius:10px; padding:18px 22px; margin-bottom:18px; }
+  h3 { margin:0 0 10px; color:var(--navy); }
+  .rules { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:10px; }
+  .rules div { background:var(--tint); border-radius:8px; padding:10px 14px; }
+  .rules small { display:block; color:var(--navy); }
+  .rules strong { color:var(--navy); }
+  .row { display:flex; flex-wrap:wrap; gap:10px; }
+  input { flex:1 1 240px; padding:10px 12px; font-size:1rem; border:2px solid var(--blue); border-radius:6px; }
+  input:focus { outline:none; border-color:var(--navy); }
+  button { padding:10px 18px; border:0; border-radius:6px; color:#fff; font-weight:600; cursor:pointer; }
+  .b-bug { background:var(--red); } .b-fix { background:var(--lime); color:var(--navy); } .b-reset { background:var(--grey); }
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .box { border:3px solid; border-radius:10px; padding:16px; }
+  .box.bug { border-color:var(--red); } .box.fix { border-color:var(--limed); }
+  .bug h4 { color:var(--red); } .fix h4 { color:var(--navy); }
+  h4 { margin:0 0 10px; }
+  .line { display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid #e5e7eb; }
+  .line span { color:var(--grey); }
+  .msg { margin-top:10px; padding:10px 12px; border-radius:6px; background:var(--bg); min-height:3em; }
+  .msg.ok { background:rgba(199,239,102,.45); color:#2f4a00; } .msg.err { background:#fee2e2; color:#7f1d1d; }
+  ol { margin:10px 0 0; padding-left:22px; font-size:.9rem; }
+  pre { margin:0; padding:14px; background:var(--navy); color:var(--bg); border-radius:8px; overflow-x:auto; font-size:.8rem; }
+  .hb { background:rgba(214,40,57,.6); display:block; } .hf { background:rgba(199,239,102,.3); display:block; }
+  .c { color:#a9c3fd; }
+  table { width:100%; border-collapse:collapse; font-size:.9rem; }
+  th, td { border:1px solid #cdd6ea; padding:8px 10px; text-align:left; vertical-align:top; }
+  th { background:var(--tint); color:var(--navy); }
+  @media (max-width:720px) { .grid { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>SIMULASI BUG &amp; FIX</h1>
+  <h2>Sistem Pendaftaran Seminar</h2>
+  <p>Mendemonstrasikan Software Maintenance: tiga bug diidentifikasi, diperbaiki, lalu diuji dengan membandingkan versi BUG dan versi FIX.</p>
+</header>
+
+<main>
+  <section>
+    <h3>Aturan Sistem</h3>
+    <div class="rules">
+      <div><small>Kuota maksimal</small><strong>5 peserta</strong></div>
+      <div><small>Aturan</small><strong>Nama wajib diisi (huruf saja), tidak boleh ganda, dan peserta ke-6 ditolak</strong></div>
+      <div><small>Status sistem</small><strong id="status">Siap dijalankan</strong></div>
+    </div>
+  </section>
+
+  <section>
+    <h3>Input Peserta Baru</h3>
+    <div class="row">
+      <input id="nama" placeholder="Nama peserta" maxlength="40">
+      <button class="b-bug" onclick="jalankan('bug')">Jalankan BUG</button>
+      <button class="b-fix" onclick="jalankan('fix')">Jalankan FIX</button>
+      <button class="b-reset" onclick="reset()">Reset</button>
+    </div>
+  </section>
+
+  <section>
+    <h3>Hasil Simulasi</h3>
+    <div class="grid">
+      <div class="box bug">
+        <h4>SEBELUM / BUG</h4>
+        <div class="line"><span>Jumlah peserta</span><strong id="bug-n"></strong></div>
+        <div class="line"><span>Status pendaftaran</span><strong id="bug-s"></strong></div>
+        <div class="msg" id="bug-m"></div>
+        <ol id="bug-l"></ol>
+      </div>
+      <div class="box fix">
+        <h4>SESUDAH / FIX</h4>
+        <div class="line"><span>Jumlah peserta</span><strong id="fix-n"></strong></div>
+        <div class="line"><span>Status pendaftaran</span><strong id="fix-s"></strong></div>
+        <div class="msg" id="fix-m"></div>
+        <ol id="fix-l"></ol>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h3>Kode Program</h3>
+    <div class="grid">
+      <div>
+        <p><strong>Sebelum / BUG</strong></p>
+<pre>function daftarBug(nama) {
+<span class="hb">  peserta.push(nama);</span>
+  return { ok: true, pesan: "Berhasil" };
+}</pre>
+      </div>
+      <div>
+        <p><strong>Sesudah / FIX</strong></p>
+<pre>function daftarFix(nama) {
+  nama = nama.trim();
+<span class="hf">  if (peserta.length >= KUOTA)
+    return gagal("Kuota seminar sudah penuh.");
+  if (!nama)
+    return gagal("Nama tidak boleh kosong.");
+  if (!/^\p{L}[\p{L} .'-]+$/u.test(nama))
+    return gagal("Nama tidak valid (tanpa angka).");
+  if (peserta.some(p => p.toLowerCase() === nama.toLowerCase()))
+    return gagal("Nama sudah terdaftar.");</span>
+  peserta.push(nama);
+  return { ok: true, pesan: "Berhasil" };
+}</pre>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h3>Penjelasan</h3>
+    <table>
+      <tr><th>Bug</th><th>Penyebab</th><th>Dampak</th><th>Perbaikan</th></tr>
+      <tr><td>1. Nama tidak valid</td><td>Isian nama tidak divalidasi.</td><td>Nama kosong, hanya spasi, atau mengandung angka/simbol (misalnya "sit1") tetap terdaftar dan menghabiskan kuota.</td><td>Cek nama tidak kosong dan hanya berisi huruf dengan <code>regex</code>.</td></tr>
+      <tr><td>2. Nama ganda</td><td>Tidak ada pemeriksaan nama yang sudah terdaftar.</td><td>Satu orang bisa mendaftar berkali-kali dan memakan banyak kursi.</td><td>Cek dengan <code>some()</code> (tidak peduli huruf besar/kecil).</td></tr>
+      <tr><td>3. Kuota</td><td>Jumlah peserta tidak dibandingkan dengan kuota.</td><td>Peserta ke-6 dan seterusnya tetap diterima, melebihi kapasitas.</td><td>Cek <code>peserta.length &gt;= KUOTA</code>.</td></tr>
+    </table>
+    <p><strong>Hasil pengujian setelah fix:</strong> ketiga kasus ditolak dengan pesan yang sesuai dan jumlah peserta tidak bertambah. Versi BUG menerima ketiganya sehingga data menjadi tidak valid.</p>
+  </section>
+</main>
+
+<script>
+  const KUOTA = 5;
+  const AWAL = ["Andi", "Budi", "Citra", "Dewi"]; // data contoh, bukan data sungguhan
+  const NAMA_VALID = /^\p{L}[\p{L} .'-]+$/u;         // huruf, spasi, titik, apostrof, strip
+  const data = {};                                // data terpisah untuk bug dan fix
+
+  const gagal = pesan => ({ ok: false, pesan });
+
+  // ===== VERSI BUG: langsung menerima apa pun =====
+  function daftarBug(nama) {
+    data.bug.push(nama);
+    return { ok: true, pesan: "Pendaftaran berhasil" };
+  }
+
+  // ===== VERSI FIX: validasi dulu sebelum menerima =====
+  function daftarFix(nama) {
+    nama = nama.trim().replace(/\s+/g, " ");        // rapikan spasi berlebih
+    if (data.fix.length >= KUOTA) return gagal("Pendaftaran gagal, kuota seminar sudah penuh.");
+    if (!nama) return gagal("Nama tidak boleh kosong.");
+    if (!NAMA_VALID.test(nama)) return gagal("Nama tidak valid: hanya huruf, minimal 2 karakter, tanpa angka.");
+    if (data.fix.some(p => p.toLowerCase() === nama.toLowerCase())) return gagal("Nama sudah terdaftar.");
+    data.fix.push(nama);
+    return { ok: true, pesan: "Pendaftaran berhasil" };
+  }
+
+  const $ = id => document.getElementById(id);
+
+  // Menampilkan hasil ke layar ('bug' atau 'fix'); res = null berarti kondisi awal
+  function tampil(v, res) {
+    const l = data[v];
+    $(v + "-n").textContent = l.length + " / " + KUOTA;
+    $(v + "-l").innerHTML = "";
+    l.forEach(n => {
+      const li = document.createElement("li");
+      li.textContent = n.trim() ? n : "(kosong)";
+      $(v + "-l").appendChild(li);
+    });
+    let status = "Belum dijalankan", pesan = "Belum ada simulasi.", cls = "msg";
+    if (res) {
+      status = res.ok ? "Diterima" : "Ditolak";
+      pesan = res.pesan;
+      cls = "msg " + (res.ok ? "ok" : "err");
+    }
+    $(v + "-s").textContent = status;
+    $(v + "-m").textContent = pesan;
+    $(v + "-m").className = cls;
+  }
+
+  function jalankan(v) {
+    const nama = $("nama").value;                    // sengaja tidak divalidasi di sini
+    tampil(v, v === "bug" ? daftarBug(nama) : daftarFix(nama));
+    $("status").textContent = "Simulasi " + v.toUpperCase() + " dijalankan";
+  }
+
+  function reset() {
+    data.bug = [...AWAL];
+    data.fix = [...AWAL];
+    tampil("bug", null);
+    tampil("fix", null);
+    $("nama").value = "";
+    $("status").textContent = "Siap dijalankan";
+  }
+
+  reset();
+</script>
+</body>
+</html>
